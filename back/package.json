@@ -1,0 +1,50 @@
+{
+  "name": "deepexi-scaffold-ui",
+  "version": "0.1.1",
+  "egg": {
+    "declarations": true
+  },
+  "dependencies": {
+    "@taccisum/egg-utils": "^0.1.0",
+    "deepexi-body": "^0.0.1",
+    "deepexi-onerror": "^0.2.0",
+    "egg": "^2.15.1",
+    "egg-scripts": "^2.11.0",
+    "egg-swagger-doc": "^2.3.1",
+    "egg-validate": "^2.0.0",
+    "egg-validate-plus": "^1.1.6",
+    "koa-compress": "2.0.0",
+    "koa-logger": "^3.2.0",
+    "lodash": "^4.17.4",
+    "uuid": "^3.3.3"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^8.0.0",
+    "@commitlint/config-conventional": "^8.0.0",
+    "autod": "^3.0.1",
+    "autod-egg": "^1.1.0",
+    "egg-bin": "^4.11.0",
+    "egg-ci": "^1.11.0",
+    "egg-mock": "^3.21.0",
+    "eslint": "^5.13.0",
+    "eslint-config-egg": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "scripts": {
+    "start": "egg-scripts start --daemon --env=prod --port=${PORT:-7001} --workers=${WORKERS:-4} --title=deepexi-scaffold-ui",
+    "stop": "egg-scripts stop --title=deepexi-scaffold-ui",
+    "dev": "egg-bin dev",
+    "debug": "egg-bin debug",
+    "test": "npm run lint -- --fix && npm run test-local",
+    "test-local": "egg-bin test",
+    "cov": "egg-bin cov",
+    "lint": "eslint .",
+    "ci": "npm run lint && npm run cov",
+    "commit": "npx git-cz",
+    "autod": "autod"
+  },
+  "author": "lyTongXue",
+  "license": "MIT"
+}
