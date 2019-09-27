@@ -173,9 +173,7 @@ class Scaffold {
     cmd += `yo ${this._getScaffoldName()} -c`;
     for (const key in options.answers) {
       const val = options.answers[key];
-      if (typeof val === 'string') {
-        cmd += ` --${key}=${val} `;
-      }
+      cmd += ` --${key}=${val} `;
     }
     cmd += `;tar -cvf ../${options.name}.tar ./`;
     return cmd;

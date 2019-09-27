@@ -26,6 +26,11 @@
     "type": "git",
     "url": "https://github.com/deepexi/deepexi-scaffold-ui.git"
   },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
   "bin": {
     "scaffold-ui": "bin/scaffold-ui.js"
   },
