@@ -39,11 +39,13 @@ describe('test/app/service/scaffold/scaffold.integration.test.js', () => {
   });
 
   it('getForm', async () => {
-    assert(await scaffold.getForm());
+    const form = await scaffold.getForm();
+    assert(form);
   });
 
   it('getDescription', async () => {
-    assert(await scaffold.getDescription());
+    const desc = await scaffold.getDescription();
+    assert(desc);
   });
 
   it('getPackageInfo', async () => {
