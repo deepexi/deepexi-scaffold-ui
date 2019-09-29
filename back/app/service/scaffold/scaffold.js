@@ -11,34 +11,44 @@ const uuidv1 = require('uuid/v1');
 
 const NPM_PACKAGE_FILE = 'package.json';
 
-const ID2NAME = {
-  'generator-deepexi-dubbo': 'Dubbo',
-  'generator-deepexi-eggjs': 'EggJS',
-  'generator-deepexi-spring-cloud': 'SpringCloud',
+const ID2INFO = {
+  'generator-deepexi-dubbo': {
+    name: 'Dubbo',
+    scaffold: 'deepexi-dubbo',
+  },
+  'generator-deepexi-eggjs': {
+    name: 'EggJS',
+    scaffold: 'deepexi-eggjs',
+  },
+  'generator-deepexi-spring-cloud': {
+    name: 'SpringCloud',
+    scaffold: 'deepexi-spring-cloud',
+  },
 };
 
 class Scaffold {
 
-  constructor(id) {
+  constructor(ctx, id) {
+    this.ctx = ctx;
     this.id = id;
+    this.info = ID2INFO[this.id];
+    if (!this.info) {
+      throw new ScaffoldError(`暂不支持该手架：${id}`);
+    }
   }
 
   async detail() {
-    const name = ID2NAME[this.id];
-    if (name) {
-      const currentVersion = await this.getCurrentVersion();
-      const latestVersion = await this.getLatestVersion();
-      return {
-        id: this.id,
-        name,
-        isInstall: (await this.isInstall()) ? 1 : 0,
-        isUpdatable: (currentVersion === latestVersion) ? 0 : 1,
-        description: await this.getDescription(),
-        currentVersion,
-        latestVersion,
-      };
-    }
-    return null;
+    const currentVersion = await this.getCurrentVersion();
+    const latestVersion = await this.getLatestVersion();
+    return {
+      id: this.id,
+      name: this.info.name,
+      isInstall: (await this.isInstall()) ? 1 : 0,
+      isUpdatable: (currentVersion === latestVersion) ? 0 : 1,
+      description: await this.getDescription(),
+      currentVersion,
+      latestVersion,
+    };
   }
 
   async generate(options = {}) {
@@ -50,7 +60,7 @@ class Scaffold {
     if (result.code) {
       throw new ScaffoldError('脚手架生成代码失败');
     }
-    return this._getTarPath(options);
+    return this._getProductPath(options);
   }
 
   async install() {
@@ -61,6 +71,8 @@ class Scaffold {
     if (result.code) {
       throw new NpmError('脚手架安装失败');
     }
+    this.ctx.logger.debug('[Scaffold] %s --- 安装脚手架', this.id);
+    this._setCache({ isInstall: 1 });
   }
 
   async update() {
@@ -69,10 +81,12 @@ class Scaffold {
     if (currentVersion === latestVersion) {
       throw new ScaffoldError('脚手架已是最新版');
     }
-    const result = await CommandUtils.execCommand(`npm update ${this.id} -g`);
+    const result = await CommandUtils.execCommand(`npm install ${this.id}@latest -g`);
     if (result.code) {
       throw new NpmError('更新脚手架失败');
     }
+    this.ctx.logger.debug('[Scaffold] %s --- 脚手架版本更新至 %s', this.id, latestVersion);
+    this._clearCache();
   }
 
   async delete() {
@@ -81,41 +95,36 @@ class Scaffold {
     if (result.code) {
       throw new NpmError('移除脚手架失败');
     }
-  }
-
-  async getInstallPath() {
-    const result = await CommandUtils.execCommand('npm root -g');
-    if (result.code || _.isEmpty(result.stdout)) {
-      throw new ScaffoldError.NpmError('获取 npm 全局安装路径失败');
-    }
-    const rootPath = StringUtils.eliminateLineBreak(result.stdout);
-    return path.join(rootPath, this.id);
+    this.ctx.logger.debug('[Scaffold] %s --- 移除脚手架', this.id);
+    this._clearCache();
   }
 
   async getForm() {
-    if (await this.isInstall()) {
-      const result = await CommandUtils.execCommand(`yo ${this._getScaffoldName()} --help`);
-      if (!result.code && result.stdout.includes('--form')) {
-        const result = await CommandUtils.execCommand(`yo ${this._getScaffoldName()} --form`);
-        if (!result.code && !_.isEmpty(result.stdout)) {
-          return JSON.parse(result.stdout);
+    let form = this._getCache('form');
+    if (!form) {
+      if (await this.isInstall() && await this._isSupportUIFunc('form')) {
+        const rs = await CommandUtils.execCommand(`yo ${this.info.scaffold} --form`);
+        if (!rs.code && !_.isEmpty(rs.stdout)) {
+          form = JSON.parse(rs.stdout);
+          this._setCache({ form });
         }
       }
     }
-    return null;
+    return form;
   }
 
   async getDescription() {
-    if (await this.isInstall()) {
-      let result = await CommandUtils.execCommand(`yo ${this._getScaffoldName()} --help`);
-      if (!result.code && result.stdout.includes('--description')) {
-        result = await CommandUtils.execCommand(`yo ${this._getScaffoldName()} --desc`);
-        if (!result.code && !_.isEmpty(result.stdout)) {
-          return result.stdout;
+    let description = this._getCache('description');
+    if (!description) {
+      if (await this.isInstall() && await this._isSupportUIFunc('description')) {
+        const rs = await CommandUtils.execCommand(`yo ${this.info.scaffold} --desc`);
+        if (!rs.code && !_.isEmpty(rs.stdout)) {
+          description = rs.stdout;
+          this._setCache({ description });
         }
       }
     }
-    return null;
+    return description;
   }
 
   async getPackageInfo() {
@@ -130,33 +139,51 @@ class Scaffold {
   }
 
   async isInstall() {
-    // const result = await CommandUtils.execCommand(`npm ls ${this.id} -g`);
-    // return !result.code;
-    // TODO:: 因 npm ls 命令太慢，建议采用文件方式判断是否安装
-    try {
-      await fs.access(await this.getInstallPath());
-      return true;
-    } catch (e) {
-      return false;
+    const isInstall = this._getCache('isInstall');
+    if (!isInstall) {
+      try {
+        await fs.access(await this.getInstallPath());
+        this._setCache({ isInstall: 1 });
+      } catch (e) {
+        return false;
+      }
     }
+    return true;
+  }
+
+  async getInstallPath() {
+    const result = await CommandUtils.execCommand('npm root -g');
+    if (result.code || _.isEmpty(result.stdout)) {
+      throw new ScaffoldError.NpmError('获取 npm 全局安装路径失败');
+    }
+    const rootPath = StringUtils.eliminateLineBreak(result.stdout);
+    return path.join(rootPath, this.id);
   }
 
   async getLatestVersion() {
-    const result = await CommandUtils.execCommand(`npm view ${this.id} version`);
-    if (result.code || _.isEmpty(result.stdout)) {
-      return null;
+    let latestVersion = this._getCache('latestVersion');
+    if (!latestVersion) {
+      const rs = await CommandUtils.execCommand(`npm view ${this.id} version`);
+      if (rs.code || _.isEmpty(rs.stdout)) {
+        return null;
+      }
+      latestVersion = StringUtils.eliminateLineBreak(rs.stdout);
+      this._setCache({ latestVersion });
     }
-    return StringUtils.eliminateLineBreak(result.stdout);
+    return latestVersion;
   }
 
   async getCurrentVersion() {
-    if (await this.isInstall()) {
+    let currentVersion = this._getCache('currentVersion');
+    if (!currentVersion) {
       const packageInfo = await this.getPackageInfo();
-      if (packageInfo) {
-        return packageInfo.version;
+      if (!packageInfo) {
+        return null;
       }
+      currentVersion = packageInfo.version;
+      this._setCache({ currentVersion });
     }
-    return null;
+    return currentVersion;
   }
 
   async _checkIsInstall() {
@@ -170,23 +197,57 @@ class Scaffold {
     let cmd = `mkdir -p ${generatePath};`;
     cmd += `chmod 777 ${generatePath};`;
     cmd += `cd ${generatePath};`;
-    cmd += `yo ${this._getScaffoldName()} -c`;
+    cmd += `yo ${this.info.scaffold} -c`;
     for (const key in options.answers) {
       const val = options.answers[key];
       cmd += ` --${key}=${val} `;
     }
     cmd += `;tar -cvf ../${options.name}.tar ./`;
+    this.ctx.logger.info('[Scaffold] %s --- 生成代码命令：%s', this.id, cmd);
     return cmd;
   }
 
-  _getTarPath(options) {
-    return path.resolve(options.tmpDir, `${options.name}.tar`);
+  _getProductPath(options) {
+    const productPath = path.resolve(options.tmpDir, `${options.name}.tar`);
+    this.ctx.logger.debug('[Scaffold] %s --- 生成制品路径：%s', this.id, productPath);
+    return productPath;
   }
 
-  _getScaffoldName() {
-    return this.id.substring(this.id.indexOf('-') + 1, this.id.length);
+  async _isSupportUIFunc(func) {
+    const rs = await CommandUtils.execCommand(`yo ${this.info.scaffold} --help`);
+    if (!rs.code) {
+      switch (func) {
+        case 'description':
+          return rs.stdout.includes('--description');
+        case 'form':
+          return rs.stdout.includes('--form');
+        default:
+          break;
+      }
+    }
+    return false;
   }
 
+  _getCache(property) {
+    const cache = this.ctx.app.scaffoldCacheMap.get(this.id);
+    if (cache) {
+      this.ctx.logger.debug('[Scaffold] %s --- 缓存信息：%o', this.id, cache);
+      return (property) ? cache[property] : cache;
+    }
+    return null;
+  }
+
+  _setCache(info) {
+    let cache = this._getCache();
+    cache = _.assign(cache, info);
+    this.ctx.logger.info('[Scaffold] %s --- 设置缓存：%o', this.id, cache);
+    this.ctx.app.scaffoldCacheMap.set(this.id, cache);
+  }
+
+  _clearCache() {
+    this.ctx.logger.info('[Scaffold] %s --- 清理缓存', this.id);
+    this.ctx.app.scaffoldCacheMap.set(this.id, null);
+  }
 }
 
 module.exports = Scaffold;

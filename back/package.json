@@ -33,9 +33,9 @@
     "node": ">=10.0.0"
   },
   "scripts": {
-    "start": "egg-scripts start --daemon --env=prod --port=${PORT:-7001} --workers=${WORKERS:-4} --title=deepexi-scaffold-ui",
+    "start": "egg-scripts start --daemon --env=prod --port=${PORT:-7001} --workers=${WORKERS:-1} --title=deepexi-scaffold-ui",
     "stop": "egg-scripts stop --title=deepexi-scaffold-ui",
-    "dev": "egg-bin dev",
+    "dev": "egg-bin dev --port=${PORT:-7001}",
     "debug": "egg-bin debug",
     "test": "npm run lint -- --fix && npm run test-local",
     "test-local": "egg-bin test",
