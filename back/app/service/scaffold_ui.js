@@ -21,9 +21,7 @@ module.exports = app => {
     async detail(scaffoldId) {
       const scaffold = this.scaffoldManager.get(scaffoldId);
       const data = await scaffold.detail();
-      if (data) {
-        data.form = await scaffold.getForm();
-      }
+      data.form = await scaffold.getForm();
       return data;
     }
 

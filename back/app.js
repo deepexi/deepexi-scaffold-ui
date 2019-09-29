@@ -13,6 +13,7 @@ process.on('uncaughtException', err => {
 module.exports = class AppBootHook {
   constructor(app) {
     this.app = app;
+    this.app.scaffoldCacheMap = new Map();
   }
 
 };

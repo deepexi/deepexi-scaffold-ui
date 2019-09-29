@@ -7,16 +7,25 @@ const command = require('commander');
 
 command
     .option('-p, --port [port]', '端口号', '7001')
-    .option('-w, --workers [workers]', '工作线程', '4')
+    // .option('-w, --workers [workers]', '工作线程（非Debug模式下有效）', '2')
     .option('-s, --swagger', '是否开启swagger')
+    .option('-d, --debug', '是否开启调试模式')
     .parse(process.argv);
 
 process.env.PORT = command.port;
-process.env.WORKERS = command.workers;
+// process.env.WORKERS = command.workers;
 process.env.swagger = !!command.swagger;
+process.env.debug = !!command.debug;
 
-const initCmd = spawn('npm', ['run', 'start'],{
-    cwd: path.resolve(__dirname, '../')
-});
-initCmd.stdout.on('data', data => console.log(data.toString()));
-initCmd.stderr.on('data', data => console.log(data.toString()));
+let startCmd;
+if(!!command.debug){
+    startCmd = spawn('npm', ['run', 'dev'],{
+        cwd: path.resolve(__dirname, '../')
+    });
+}else {
+    startCmd = spawn('npm', ['run', 'start'],{
+        cwd: path.resolve(__dirname, '../')
+    });
+}
+startCmd.stdout.on('data', data => console.log(data.toString()));
+startCmd.stderr.on('data', data => console.log(data.toString()));

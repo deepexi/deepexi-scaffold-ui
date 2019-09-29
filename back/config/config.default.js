@@ -49,7 +49,7 @@ module.exports = appInfo => {
   };
 
   config.swaggerdoc = {
-    enable: process.env,
+    enable: process.env.swagger,
     dirScanner: './app/controller',
     apiInfo: {
       title: appInfo.name + ' Api Docs',

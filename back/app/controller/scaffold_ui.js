@@ -79,6 +79,16 @@ class ScaffoldUiController extends Controller {
     ctx.body = '脚手架删除成功';
   }
 
+  /**
+   * @Summary 清理脚手架缓存信息
+   * @Router GET /clearCache
+   * @Response 200
+   */
+  async clearCache() {
+    this.ctx.app.scaffoldCacheMap.clear();
+    this.ctx.body = '脚手架缓存信息清理成功';
+  }
+
 }
 
 module.exports = ScaffoldUiController;

@@ -2,8 +2,5 @@
 
 module.exports = () => {
   return {
-    swaggerdoc: {
-      enable: true,
-    },
   };
 };

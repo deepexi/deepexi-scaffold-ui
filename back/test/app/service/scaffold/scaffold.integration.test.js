@@ -1,14 +1,17 @@
 'use strict';
-const assert = require('assert').strict;
+const { app, assert } = require('egg-mock/bootstrap');
 const fs = require('fs');
 const Scaffold = require('../../../../app/service/scaffold/scaffold');
 
 describe('test/app/service/scaffold/scaffold.integration.test.js', () => {
 
   let scaffold;
+  let ctx;
 
   before(() => {
-    scaffold = new Scaffold('generator-deepexi-dubbo');
+    ctx = app.mockContext();
+    app.scaffoldCacheMap = new Map();
+    scaffold = new Scaffold(ctx, 'generator-deepexi-dubbo');
   });
 
   it('install', async () => {
@@ -32,7 +35,6 @@ describe('test/app/service/scaffold/scaffold.integration.test.js', () => {
         artifactId: 'test',
       },
     });
-    console.log(`projectGzipPath:${gzipPath}`);
     assert(fs.existsSync(gzipPath));
   });
 

@@ -12,7 +12,7 @@
 
 [CHANGELOG](./CHANGELOG.md)
 
-> 注意：此版本咱不稳定，且仅支持在 Mac、Linux 系统运行
+> 注意：此版本暂不稳定，且仅支持在 Mac、Linux 系统运行
 
 DeepEXI 脚手架 UI 可视化操作界面
 
@@ -34,18 +34,12 @@ yo -v
 ```bash
 npm install deepexi-scaffold-ui -g
 ```
-
-初始化脚手架UI
-```bash
-scaffold-ui init
-```
-
 启动脚手架UI，可选项：
 - -p ：服务端口号（默认7001）
 - -s ：开启Swagger访问（默认关闭）
-- -w ：工作进程数（默认4）
+- -d ：是否开启调试模式（默认关闭）
 ```bash
-scaffold-ui start -p 7001 -w 4 -s 
+scaffold-ui start -p 7001 -w 2 -s 
 ```
 
 停止脚手架UI
@@ -54,6 +48,8 @@ scaffold-ui stop
 ```
 
 访问脚手架UI：http://localhost:7001/index.html
+
+清理脚手架缓存信息：http://localhost:7001/clearCache
 
 ## 启动错误处理
 
