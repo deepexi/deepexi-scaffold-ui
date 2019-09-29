@@ -39,7 +39,7 @@ npm install deepexi-scaffold-ui -g
 - -s ：开启Swagger访问（默认关闭）
 - -d ：是否开启调试模式（默认关闭）
 ```bash
-scaffold-ui start -p 7001 -w 2 -s 
+scaffold-ui start -p 7001 -s 
 ```
 
 停止脚手架UI
@@ -80,7 +80,13 @@ npm install -g npm@latest
 
 ### Yeoman 权限不足问题
 
-如若遇到以下错误信息
+如果脚手架安装后无法正常显示描述与表单信息，如下图：
+
+![](https://user-gold-cdn.xitu.io/2019/9/29/16d7c54366a68cc8?w=1247&h=368&f=png&s=42682)
+
+![](https://user-gold-cdn.xitu.io/2019/9/29/16d7c5482519cf5e?w=1253&h=290&f=png&s=17406)
+
+或遇到以下错误信息
 ```bash
 Error: EACCES: permission denied, open '/root/.config/insight-nodejs/insight-yo.json.1765396883'
     at Object.openSync (fs.js:451:3)
@@ -91,6 +97,5 @@ Error: EACCES: permission denied, open '/root/.config/insight-nodejs/insight-yo.
 
 请修改目录权限
 ```bash
-chmod 777 /root/.config
-
+chmod 777 /root/
 ```
