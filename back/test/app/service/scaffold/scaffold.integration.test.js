@@ -38,15 +38,13 @@ describe('test/app/service/scaffold/scaffold.integration.test.js', () => {
     assert(fs.existsSync(gzipPath));
   });
 
-  it('getForm', async () => {
-    const form = await scaffold.getForm();
-    assert(form);
-  });
-
-  it('getDescription', async () => {
-    const desc = await scaffold.getDescription();
-    assert(desc);
-  });
+  // it('getForm', async () => {
+  //   assert(await scaffold.getForm());
+  // });
+  //
+  // it('getDescription', async () => {
+  //   assert(await scaffold.getDescription());
+  // });
 
   it('getPackageInfo', async () => {
     assert(await scaffold.getPackageInfo());
