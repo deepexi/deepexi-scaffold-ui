@@ -72,7 +72,8 @@ class Scaffold {
       throw new NpmError('脚手架安装失败');
     }
     this.ctx.logger.debug('[Scaffold] %s --- 安装脚手架', this.id);
-    this._setCache({ isInstall: 1 });
+    this._clearCache();
+    this._updateCache({ isInstall: 1 });
   }
 
   async update() {
@@ -101,28 +102,30 @@ class Scaffold {
 
   async getForm() {
     let form = this._getCache('form');
-    if (!form) {
+    if (form === undefined) {
+      form = null;
       if (await this.isInstall() && await this._isSupportUIFunc('form')) {
         const rs = await CommandUtils.execCommand(`yo ${this.info.scaffold} --form`);
-        if (!rs.code && !_.isEmpty(rs.stdout)) {
+        if (!rs.code) {
           form = JSON.parse(rs.stdout);
-          this._setCache({ form });
         }
       }
+      this._updateCache({ form });
     }
     return form;
   }
 
   async getDescription() {
     let description = this._getCache('description');
-    if (!description) {
+    if (description === undefined) {
+      description = null;
       if (await this.isInstall() && await this._isSupportUIFunc('description')) {
         const rs = await CommandUtils.execCommand(`yo ${this.info.scaffold} --desc`);
-        if (!rs.code && !_.isEmpty(rs.stdout)) {
+        if (!rs.code) {
           description = rs.stdout;
-          this._setCache({ description });
         }
       }
+      this._updateCache({ description });
     }
     return description;
   }
@@ -139,16 +142,18 @@ class Scaffold {
   }
 
   async isInstall() {
-    const isInstall = this._getCache('isInstall');
-    if (!isInstall) {
+    let isInstall = this._getCache('isInstall');
+    if (isInstall === undefined) {
       try {
         await fs.access(await this.getInstallPath());
-        this._setCache({ isInstall: 1 });
+        this._updateCache({ isInstall: true });
+        isInstall = true;
       } catch (e) {
-        return false;
+        this._updateCache({ isInstall: false });
+        isInstall = false;
       }
     }
-    return true;
+    return isInstall;
   }
 
   async getInstallPath() {
@@ -162,26 +167,20 @@ class Scaffold {
 
   async getLatestVersion() {
     let latestVersion = this._getCache('latestVersion');
-    if (!latestVersion) {
+    if (latestVersion === undefined) {
       const rs = await CommandUtils.execCommand(`npm view ${this.id} version`);
-      if (rs.code || _.isEmpty(rs.stdout)) {
-        return null;
-      }
-      latestVersion = StringUtils.eliminateLineBreak(rs.stdout);
-      this._setCache({ latestVersion });
+      latestVersion = (rs.code || _.isEmpty(rs.stdout)) ? null : StringUtils.eliminateLineBreak(rs.stdout);
+      this._updateCache({ latestVersion });
     }
     return latestVersion;
   }
 
   async getCurrentVersion() {
     let currentVersion = this._getCache('currentVersion');
-    if (!currentVersion) {
+    if (currentVersion === undefined) {
       const packageInfo = await this.getPackageInfo();
-      if (!packageInfo) {
-        return null;
-      }
-      currentVersion = packageInfo.version;
-      this._setCache({ currentVersion });
+      currentVersion = (packageInfo) ? packageInfo.version : null;
+      this._updateCache({ currentVersion });
     }
     return currentVersion;
   }
@@ -230,23 +229,24 @@ class Scaffold {
 
   _getCache(property) {
     const cache = this.ctx.app.scaffoldCacheMap.get(this.id);
-    if (cache) {
-      this.ctx.logger.debug('[Scaffold] %s --- 缓存信息：%o', this.id, cache);
-      return (property) ? cache[property] : cache;
+    if (property && cache) {
+      this.ctx.logger.debug('[Scaffold] %s --- %s 缓存信息：%s', this.id, property, cache[property]);
+      return cache[property];
     }
-    return null;
+    this.ctx.logger.debug('[Scaffold] %s --- 缓存信息：%o', this.id, cache);
+    return cache;
   }
 
-  _setCache(info) {
-    let cache = this._getCache();
-    cache = _.assign(cache, info);
-    this.ctx.logger.info('[Scaffold] %s --- 设置缓存：%o', this.id, cache);
+  _updateCache(property) {
+    let cache = this.ctx.app.scaffoldCacheMap.get(this.id);
+    cache = _.assign(cache, property);
+    this.ctx.logger.info('[Scaffold] %s --- 更新缓存：%o', this.id, property);
     this.ctx.app.scaffoldCacheMap.set(this.id, cache);
   }
 
   _clearCache() {
     this.ctx.logger.info('[Scaffold] %s --- 清理缓存', this.id);
-    this.ctx.app.scaffoldCacheMap.set(this.id, null);
+    this.ctx.app.scaffoldCacheMap.set(this.id, undefined);
   }
 }
 
