@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.1](https://github.com/deepexi/deepexi-scaffold-ui/compare/v1.0.0...v1.0.1) (2019-10-12)
+
+
+### Features
+
+* 增加noAnyAnswer的trigger ([0065866](https://github.com/deepexi/deepexi-scaffold-ui/commit/0065866))
+
+
+
 ## 1.0.0 (2019-10-10)
 
 
