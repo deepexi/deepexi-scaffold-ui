@@ -45,7 +45,6 @@ export default {
     generate() {
       this.generateLoading = true
       const data = this.$refs.form.getFlatFormData()
-      console.log(data)
       generateScaffolds({
         id: this.$route.params.scaffoldId,
         data

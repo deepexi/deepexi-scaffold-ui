@@ -9,9 +9,26 @@
             <p>当前版本：{{scaffold.currentVersion || '-'}}</p>
           </div>
           <div class="footer" @click="stopPropagation($event)">
-            <el-button size="small" type="primary" :disabled="scaffold.isInstall===0 || scaffold.isUpdatable===0" @click="update(scaffold)">更新</el-button>
-            <el-button size="small" type="success" :disabled="scaffold.isInstall===1" @click="install(scaffold)">安装</el-button>
-            <el-button size="small" type="danger" @click="deleteScaffold(scaffold)">删除</el-button>
+            <el-button 
+              size="small" 
+              type="primary" 
+              :loading="scaffold.loading.update" 
+              :disabled="scaffold.isInstall===0 || scaffold.isUpdatable===0" 
+              @click="update(scaffold)"
+            >更新</el-button>
+            <el-button 
+              size="small" 
+              type="success" 
+              :loading="scaffold.loading.install" 
+              :disabled="scaffold.isInstall===1" 
+              @click="install(scaffold)"
+            >安装</el-button>
+            <el-button 
+              size="small" 
+              type="danger" 
+              :loading="scaffold.loading.delete"
+              @click="deleteScaffold(scaffold)"
+            >删除</el-button>
           </div>
         </div>
       </el-col>
