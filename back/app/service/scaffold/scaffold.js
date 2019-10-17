@@ -210,7 +210,7 @@ class Scaffold {
    * @private
    */
   async _checkRunning() {
-    let cache = this.ctx.app.scaffoldCacheMap.get(this.id);
+    const cache = this.ctx.app.scaffoldCacheMap.get(this.id);
     if (cache.running) {
       throw new ScaffoldError('正在执行操作...');
     }
