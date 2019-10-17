@@ -71,13 +71,16 @@ class Scaffold {
     if (await this.isInstall()) {
       throw new ScaffoldError('脚手架已安装');
     }
+    await this._checkRunning();
+    this._updateCache({ running: true });
     const result = await CommandUtils.execCommand(`npm install -g ${this.id}`);
     if (result.code) {
       throw new NpmError('脚手架安装失败');
     }
     this.ctx.logger.debug('[Scaffold] %s --- 安装脚手架', this.id);
     this._clearCache();
-    this._updateCache({ isInstall: 1 });
+    this._updateCache({ isInstall: 1, running: false });
+
   }
 
   async update() {
@@ -86,22 +89,28 @@ class Scaffold {
     if (currentVersion === latestVersion) {
       throw new ScaffoldError('脚手架已是最新版');
     }
+    await this._checkRunning();
+    this._updateCache({ running: true });
     const result = await CommandUtils.execCommand(`npm install ${this.id}@latest -g`);
     if (result.code) {
       throw new NpmError('更新脚手架失败');
     }
     this.ctx.logger.debug('[Scaffold] %s --- 脚手架版本更新至 %s', this.id, latestVersion);
     this._clearCache();
+    this._updateCache({ running: false });
+
   }
 
   async delete() {
     await this._checkIsInstall();
-    const result = await CommandUtils.execCommand(`npm uninstall ${this.id} -g`);
+    await this._checkRunning();
+    this._updateCache({ running: true }); const result = await CommandUtils.execCommand(`npm uninstall ${this.id} -g`);
     if (result.code) {
       throw new NpmError('移除脚手架失败');
     }
     this.ctx.logger.debug('[Scaffold] %s --- 移除脚手架', this.id);
     this._clearCache();
+
   }
 
   async getForm() {
@@ -192,6 +201,18 @@ class Scaffold {
   async _checkIsInstall() {
     if (!await this.isInstall()) {
       throw new ScaffoldError('脚手架还未安装');
+    }
+  }
+
+  /**
+   * 重复操作校验
+   * @returns {Promise<void>}
+   * @private
+   */
+  async _checkRunning() {
+    let cache = this.ctx.app.scaffoldCacheMap.get(this.id);
+    if (cache.running) {
+      throw new ScaffoldError('正在执行操作...');
     }
   }
 
