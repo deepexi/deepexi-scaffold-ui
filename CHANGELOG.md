@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.2](https://github.com/deepexi/deepexi-scaffold-ui/compare/v1.0.1...v1.0.2) (2019-10-17)
+
+
+### Features
+
+* 增加安装，更新，删除按钮的loading状态 ([56a0d49](https://github.com/deepexi/deepexi-scaffold-ui/commit/56a0d49))
+
+
+
 ### [1.0.1](https://github.com/deepexi/deepexi-scaffold-ui/compare/v1.0.0...v1.0.1) (2019-10-12)
 
 
