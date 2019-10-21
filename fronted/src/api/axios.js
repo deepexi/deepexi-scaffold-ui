@@ -7,13 +7,13 @@ export const instance = (url, data = {}) => new Promise((resolve, reject) => {
   axios({ url, ...data }).then(res => {
     if (res.data && res.data.success) {
       resolve(res.data)
-    } else if (res.headers['content-type'] === 'application/x-tar') {
+    } else if (data.responseType === 'blob') {
       const contentDisposition = res.headers['content-disposition']
       const filename = contentDisposition.split(';')
         .find(str => str.indexOf('filename') > -1)
         .split('=')[1]
         .replace(/"/g, '')
-      const blob = new Blob([res.data], { type: res.headers['content-type'] })
+      const blob = new Blob([res.data])
       const link = document.createElement('a')
       link.href = window.URL.createObjectURL(blob)
       link.download = filename
