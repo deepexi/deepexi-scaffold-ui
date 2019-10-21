@@ -110,7 +110,6 @@ class Scaffold {
     }
     this.ctx.logger.debug('[Scaffold] %s --- 移除脚手架', this.id);
     this._clearCache();
-
   }
 
   async getForm() {
@@ -218,15 +217,16 @@ class Scaffold {
 
   _getGenerateCommand(options) {
     const generatePath = path.resolve(options.tmpDir, options.name);
+    fsNoPromise.mkdir(generatePath, { recursive: true }, err => {
+      if (err) this.ctx.logger.error(err);
+    });
+    this.ctx.logger.info('[Scaffold] %s --- 生成临时目录：%s', this.id, generatePath);
     let cmd = '';
     if (!/^win/.test(process.platform)) {
-      cmd += `mkdir -P ${generatePath} `;
-      cmd += ` && chmod 777 ${generatePath}`;
-    } else {
-      fsNoPromise.mkdir(generatePath, { recursive: true }, err => {
-        if (err) this.ctx.logger.error(err);
+      fsNoPromise.chmod(generatePath, 0o775, err => {
+        if (err) throw err;
+        this.ctx.logger.info('[Scaffold] %s --- 权限已更改', this.id);
       });
-      this.ctx.logger.info('[Scaffold] %s --- 生成临时目录：%s', this.id, generatePath);
     }
     cmd += ` yo ${this.info.scaffold} -c`;
     for (const key in options.answers) {
