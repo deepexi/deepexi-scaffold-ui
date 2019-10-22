@@ -72,14 +72,15 @@ class Scaffold {
       throw new ScaffoldError('脚手架已安装');
     }
     await this._checkRunning();
-    this._updateCache({ running: true });
+    this._setStatusOfRunning(true);
     const result = await CommandUtils.execCommand(`npm install -g ${this.id}`);
     if (result.code) {
       throw new NpmError('脚手架安装失败');
     }
     this.ctx.logger.debug('[Scaffold] %s --- 安装脚手架', this.id);
     this._clearCache();
-    this._updateCache({ isInstall: 1, running: false });
+    this._updateCache({ isInstall: 1 });
+    this._setStatusOfRunning(false);
 
   }
 
@@ -90,21 +91,22 @@ class Scaffold {
       throw new ScaffoldError('脚手架已是最新版');
     }
     await this._checkRunning();
-    this._updateCache({ running: true });
+    this._setStatusOfRunning(true);
     const result = await CommandUtils.execCommand(`npm install ${this.id}@latest -g`);
     if (result.code) {
       throw new NpmError('更新脚手架失败');
     }
     this.ctx.logger.debug('[Scaffold] %s --- 脚手架版本更新至 %s', this.id, latestVersion);
     this._clearCache();
-    this._updateCache({ running: false });
+    this._setStatusOfRunning(false);
 
   }
 
   async delete() {
     await this._checkIsInstall();
     await this._checkRunning();
-    this._updateCache({ running: true }); const result = await CommandUtils.execCommand(`npm uninstall ${this.id} -g`);
+    this._setStatusOfRunning(true);
+    const result = await CommandUtils.execCommand(`npm uninstall ${this.id} -g`);
     if (result.code) {
       throw new NpmError('移除脚手架失败');
     }
@@ -208,12 +210,17 @@ class Scaffold {
    * @returns {Promise<void>}
    * @private
    */
-  async _checkRunning() {
-    const cache = this.ctx.app.scaffoldCacheMap.get(this.id);
-    if (cache.running) {
+  _checkRunning() {
+    const cache = this.ctx.app.statusMap.get(this.id);
+    if (cache && cache.running) {
       throw new ScaffoldError('正在执行操作...');
     }
   }
+
+  _setStatusOfRunning(isRunning) {
+    this.ctx.app.statusMap.set(this.id, { running: isRunning });
+  }
+
 
   _getGenerateCommand(options) {
     const generatePath = path.resolve(options.tmpDir, options.name);
@@ -276,7 +283,7 @@ class Scaffold {
   }
 
   _getCache(property) {
-    const cache = this.ctx.app.scaffoldCacheMap.get(this.id);
+    const cache = this.ctx.app.getCache(this.id);
     if (property && cache) {
       this.ctx.logger.debug('[Scaffold] %s --- %s 缓存信息：%s', this.id, property, cache[property]);
       return cache[property];
@@ -286,15 +293,16 @@ class Scaffold {
   }
 
   _updateCache(property) {
-    let cache = this.ctx.app.scaffoldCacheMap.get(this.id);
+    let cache = this.ctx.app.getCache(this.id);
     cache = _.assign(cache, property);
     this.ctx.logger.info('[Scaffold] %s --- 更新缓存：%o', this.id, property);
-    this.ctx.app.scaffoldCacheMap.set(this.id, cache);
+    this.ctx.app.setOrUpdateCache(this.id, cache);
   }
 
   _clearCache() {
     this.ctx.logger.info('[Scaffold] %s --- 清理缓存', this.id);
-    this.ctx.app.scaffoldCacheMap.set(this.id, undefined);
+    this.ctx.app.setOrUpdateCache(this.id, undefined);
+    this.ctx.app.statusMap.clear();
   }
 }
 
