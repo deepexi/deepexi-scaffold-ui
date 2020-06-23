@@ -97,5 +97,5 @@ Error: EACCES: permission denied, open '/root/.config/insight-nodejs/insight-yo.
 
 请修改目录权限
 ```bash
-chmod 777 /root/
+chmod 777 -R /root/
 ```
