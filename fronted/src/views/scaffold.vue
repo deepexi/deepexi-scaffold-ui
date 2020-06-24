@@ -61,22 +61,9 @@ export default {
       getScaffolds(this.$route.params.scaffoldId)
         .then(res => {
           const data = res.payload
-          // Object.keys(data.form).forEach(key => {
-          //   if (data.form[key].type === 'list') {
-          //     data.form[key].choices = data.form[key].choices.map(item => item.key || item)
-          //   }
-          //   if (data.form[key].hasOwnProperty('child')) {
-          //     Object.keys(data.form[key].child).forEach(option => {
-          //       if (data.form[key].child[option].choices && data.form[key].child[option].choices.length > 0) {
-          //         data.form[key].child[option].choices = data.form[key].child[option].choices.map(item => item.key || item)
-          //       }
 
-          //     })
-          //   }
-          // })
           this.serializeOptions(data.form)
           this.info = data
-          // this.info = res.payload
         })
         .finally(() => {
           this.loading = false
