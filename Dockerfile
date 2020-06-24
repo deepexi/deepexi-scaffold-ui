@@ -1,11 +1,11 @@
 FROM node
 
-WORKDIR /root
-
-RUN set -x \
+RUN npm config set registry https://registry.npm.taobao.org \
     && npm install -g yo \
+    && npm install deepexi-scaffold-ui -g \
+    && mkdir -p /root/.config/insight-nodejs .yo-repository \
     && chmod 777 -R /root/ \
-    && npm install deepexi-scaffold-ui -g
+    && yo -v
 
 COPY entrypoint.sh /
 
