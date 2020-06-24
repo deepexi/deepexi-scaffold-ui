@@ -11,4 +11,6 @@ COPY entrypoint.sh /
 
 RUN chmod +x /entrypoint.sh
 
+EXPOSE 7001
+
 CMD ["/entrypoint.sh"]
