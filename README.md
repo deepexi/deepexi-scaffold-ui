@@ -20,6 +20,8 @@ DeepEXI 脚手架 UI 可视化操作界面
 
 ## 如何使用
 
+### 脚本启动
+
 安装 Yeoman
 ```bash
 npm install -g yo
@@ -50,6 +52,14 @@ scaffold-ui stop
 访问脚手架UI：http://localhost:7001/index.html
 
 清理脚手架缓存信息：http://localhost:7001/clearCache
+
+### docker 方式启动
+```markdown
+# 打包镜像
+docker build -t scaffold-ui:v1.0.0 .
+# 启动镜像
+docker run -d -p 7001:7001 --name scaffold-ui scaffold-ui:v1.0.0
+```
 
 ## 启动错误处理
 
