@@ -7,7 +7,7 @@ export const instance = (url, data = {}) => new Promise((resolve, reject) => {
   axios({ url, ...data }).then(res => {
     if (res.data && res.data.success) {
       resolve(res.data)
-    } else if (res.headers['content-type'] === 'application/x-tar') {
+    } else if (res.headers['content-type'] === 'application/zip') {
       const contentDisposition = res.headers['content-disposition']
       const filename = contentDisposition.split(';')
         .find(str => str.indexOf('filename') > -1)

@@ -1,15 +1,18 @@
 'use strict';
 
 const _ = require('lodash');
-const { ScaffoldError, NpmError } = require('./error');
+const {ScaffoldError, NpmError} = require('./error');
 const CommandUtils = require('./utils/command_utils');
 const StringUtils = require('./utils/string_utils');
 const path = require('path');
 const fs = require('fs').promises;
+const fsNoPromise = require('fs');
 const os = require('os');
+const compressing = require('compressing');
 const uuidv1 = require('uuid/v1');
 
 const NPM_PACKAGE_FILE = 'package.json';
+const COMPRESS_FILE_SUFFIX = '.zip';
 
 const ID2INFO = {
   'generator-deepexi-dubbo': {
@@ -56,10 +59,11 @@ class Scaffold {
     options.tmpDir = options.tmpDir || os.tmpdir();
     options.name = options.name || uuidv1();
     const generateCommand = this._getGenerateCommand(options);
-    const result = await CommandUtils.execCommand(generateCommand);
+    const result = await CommandUtils.execCommand(generateCommand, {cwd: path.join(options.tmpDir, options.name)});
     if (result.code) {
       throw new ScaffoldError('脚手架生成代码失败');
     }
+    await this._compressProduct(options);
     return this._getProductPath(options);
   }
 
@@ -73,7 +77,7 @@ class Scaffold {
     }
     this.ctx.logger.debug('[Scaffold] %s --- 安装脚手架', this.id);
     this._clearCache();
-    this._updateCache({ isInstall: 1 });
+    this._updateCache({isInstall: 1});
   }
 
   async update() {
@@ -110,7 +114,7 @@ class Scaffold {
           form = JSON.parse(rs.stdout);
         }
       }
-      this._updateCache({ form });
+      this._updateCache({form});
     }
     return form;
   }
@@ -125,7 +129,7 @@ class Scaffold {
           description = rs.stdout;
         }
       }
-      this._updateCache({ description });
+      this._updateCache({description});
     }
     return description;
   }
@@ -134,7 +138,7 @@ class Scaffold {
     try {
       const installPath = await this.getInstallPath();
       const packageFilePath = path.join(installPath, NPM_PACKAGE_FILE);
-      const content = await fs.readFile(packageFilePath, { encoding: 'utf8' });
+      const content = await fs.readFile(packageFilePath, {encoding: 'utf8'});
       return JSON.parse(content);
     } catch (e) {
       return null;
@@ -146,10 +150,10 @@ class Scaffold {
     if (isInstall === undefined) {
       try {
         await fs.access(await this.getInstallPath());
-        this._updateCache({ isInstall: true });
+        this._updateCache({isInstall: true});
         isInstall = true;
       } catch (e) {
-        this._updateCache({ isInstall: false });
+        this._updateCache({isInstall: false});
         isInstall = false;
       }
     }
@@ -170,7 +174,7 @@ class Scaffold {
     if (latestVersion === undefined) {
       const rs = await CommandUtils.execCommand(`npm view ${this.id} version`);
       latestVersion = (rs.code || _.isEmpty(rs.stdout)) ? null : StringUtils.eliminateLineBreak(rs.stdout);
-      this._updateCache({ latestVersion });
+      this._updateCache({latestVersion});
     }
     return latestVersion;
   }
@@ -180,7 +184,7 @@ class Scaffold {
     if (currentVersion === undefined) {
       const packageInfo = await this.getPackageInfo();
       currentVersion = (packageInfo) ? packageInfo.version : null;
-      this._updateCache({ currentVersion });
+      this._updateCache({currentVersion});
     }
     return currentVersion;
   }
@@ -193,23 +197,47 @@ class Scaffold {
 
   _getGenerateCommand(options) {
     const generatePath = path.resolve(options.tmpDir, options.name);
-    let cmd = `mkdir -p ${generatePath};`;
-    cmd += `chmod 777 ${generatePath};`;
-    cmd += `cd ${generatePath};`;
-    cmd += `yo ${this.info.scaffold} -c`;
+    let cmd = '';
+    if (!/^win/.test(process.platform)) {
+      cmd += `mkdir -P ${generatePath} `;
+      cmd += ` && chmod 777 ${generatePath}`;
+    } else {
+      fsNoPromise.mkdir(generatePath, { recursive: true }, err => {
+        if (err) this.ctx.logger.error(err);
+      });
+      this.ctx.logger.info('[Scaffold] %s --- 生成临时目录：%s', this.id, generatePath);
+    }
+    cmd += ` yo ${this.info.scaffold} -c`;
     for (const key in options.answers) {
       const val = options.answers[key];
       cmd += ` --${key}=${val} `;
     }
-    cmd += `;tar -cvf ../${options.name}.tar ./`;
+    // cmd += `;tar -cvf ../${options.name}.tar ./`;
     this.ctx.logger.info('[Scaffold] %s --- 生成代码命令：%s', this.id, cmd);
     return cmd;
   }
 
+
   _getProductPath(options) {
-    const productPath = path.resolve(options.tmpDir, `${options.name}.tar`);
+    const productPath = path.resolve(options.tmpDir, `${options.name}${COMPRESS_FILE_SUFFIX}`);
     this.ctx.logger.debug('[Scaffold] %s --- 生成制品路径：%s', this.id, productPath);
     return productPath;
+  }
+
+  async _compressProduct(options) {
+    const productPath = path.resolve(options.tmpDir, options.name);
+    const stream = new compressing.zip.Stream();
+    const files = await fs.readdir(productPath);
+    for (const f of files) {
+      stream.addEntry(path.resolve(productPath, f));
+    }
+    await new Promise(resolve => {
+      stream.pipe(fsNoPromise.createWriteStream(`${productPath}${COMPRESS_FILE_SUFFIX}`))
+        .on('finish', () => {
+          resolve();
+        });
+    });
+    this.ctx.logger.info('[Scaffold] %s --- 压缩完成：%s', this.id, productPath + COMPRESS_FILE_SUFFIX);
   }
 
   async _isSupportUIFunc(func) {
