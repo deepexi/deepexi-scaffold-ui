@@ -1,10 +1,24 @@
 <template>
   <div class="scaffold-wrapper" v-loading="loading">
-    <h1>{{info.name}}</h1>
-    <d-form v-if="info.form" class="form" ref="form" :formProps="formProps" :cliParams="info.form" />
+    <h1>{{ info.name }}</h1>
+    <d-form
+      v-if="info.form"
+      class="form"
+      ref="form"
+      :formProps="formProps"
+      :cliParams="info.form"
+    />
     <div class="buttons">
-      <el-button size="small" type="warning" @click="$router.push('/')">返回</el-button>
-      <el-button size="small" type="primary" :loading="generateLoading" @click="generate">生成</el-button>
+      <el-button size="small" type="warning" @click="$router.push('/')"
+        >返回</el-button
+      >
+      <el-button
+        size="small"
+        type="primary"
+        :loading="generateLoading"
+        @click="generate"
+        >生成</el-button
+      >
     </div>
   </div>
 </template>
@@ -21,9 +35,9 @@ export default {
       loading: false,
       generateLoading: false,
       info: {
-        form:{}
+        form: {}
       },
-      formProps:{
+      formProps: {
         labelWidth: '150px'
       }
     }
@@ -32,11 +46,24 @@ export default {
     this.getScaffolds()
   },
   methods: {
+    serializeOptions(payload) {
+      Object.values(payload).forEach(data => {
+        if (data.type === 'list') {
+          data.choices = data.choices.map(item => item.key || item)
+        }
+        if (data.child) {
+          this.serializeOptions(data.child)
+        }
+      })
+    },
     getScaffolds() {
       this.loading = true;
       getScaffolds(this.$route.params.scaffoldId)
         .then(res => {
-          this.info = res.payload
+          const data = res.payload
+
+          this.serializeOptions(data.form)
+          this.info = data
         })
         .finally(() => {
           this.loading = false
@@ -60,6 +87,9 @@ export default {
 }
 </script>
 <style lang="less">
+.d-tree-form .el-tree-node__content {
+  height: 62px !important;
+}
 .scaffold-wrapper {
   background-color: #fff;
   border: 1px solid #ccc;
