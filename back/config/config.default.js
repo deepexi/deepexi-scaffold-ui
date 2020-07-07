@@ -29,6 +29,7 @@ module.exports = appInfo => {
   };
 
   config.middleware = [
+    'errorHandler',
     'requestLogger',
     'compress',
   ];

@@ -1,7 +1,9 @@
 'use strict';
 
 const _ = require('lodash');
-const { ScaffoldError, NpmError } = require('./error');
+const {
+  ScaffoldError, NpmError,
+} = require('../../error/common_error');
 const CommandUtils = require('./utils/command_utils');
 const StringUtils = require('./utils/string_utils');
 const path = require('path');
