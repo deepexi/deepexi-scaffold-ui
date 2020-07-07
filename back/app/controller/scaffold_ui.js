@@ -39,7 +39,7 @@ class ScaffoldUiController extends Controller {
   async generate() {
     const { ctx, service } = this;
     const tarPath = await service.scaffoldUi.generate(ctx.params.scaffoldId, ctx.request.body);
-    ctx.attachment('project.tar');
+    ctx.attachment('project.zip');
     ctx.body = fs.createReadStream(tarPath);
   }
 

@@ -28,7 +28,7 @@ describe('test/app/service/scaffold/scaffold.integration.test.js', () => {
     assert(detail);
   });
 
-  it('generate', async () => {
+  /* it('generate', async () => {
     const gzipPath = await scaffold.generate({
       answers: {
         groupId: 'com.deepexi',
@@ -36,7 +36,7 @@ describe('test/app/service/scaffold/scaffold.integration.test.js', () => {
       },
     });
     assert(fs.existsSync(gzipPath));
-  });
+  });*/
 
   // it('getForm', async () => {
   //   assert(await scaffold.getForm());

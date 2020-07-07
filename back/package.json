@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "@taccisum/egg-utils": "^0.1.0",
+    "compressing": "^1.4.0",
     "deepexi-body": "^0.0.1",
     "deepexi-onerror": "^0.2.0",
     "egg": "^2.15.1",

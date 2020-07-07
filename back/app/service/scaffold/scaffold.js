@@ -6,10 +6,13 @@ const CommandUtils = require('./utils/command_utils');
 const StringUtils = require('./utils/string_utils');
 const path = require('path');
 const fs = require('fs').promises;
+const fsNoPromise = require('fs');
 const os = require('os');
+const compressing = require('compressing');
 const uuidv1 = require('uuid/v1');
 
 const NPM_PACKAGE_FILE = 'package.json';
+const COMPRESS_FILE_SUFFIX = '.zip';
 
 const ID2INFO = {
   'generator-deepexi-dubbo': {
@@ -56,10 +59,11 @@ class Scaffold {
     options.tmpDir = options.tmpDir || os.tmpdir();
     options.name = options.name || uuidv1();
     const generateCommand = this._getGenerateCommand(options);
-    const result = await CommandUtils.execCommand(generateCommand);
+    const result = await CommandUtils.execCommand(generateCommand, { cwd: path.join(options.tmpDir, options.name) });
     if (result.code) {
       throw new ScaffoldError('脚手架生成代码失败');
     }
+    await this._compressProduct(options);
     return this._getProductPath(options);
   }
 
@@ -67,6 +71,8 @@ class Scaffold {
     if (await this.isInstall()) {
       throw new ScaffoldError('脚手架已安装');
     }
+    await this._checkRunning();
+    this._setStatusOfRunning(true);
     const result = await CommandUtils.execCommand(`npm install -g ${this.id}`);
     if (result.code) {
       throw new NpmError('脚手架安装失败');
@@ -74,6 +80,8 @@ class Scaffold {
     this.ctx.logger.debug('[Scaffold] %s --- 安装脚手架', this.id);
     this._clearCache();
     this._updateCache({ isInstall: 1 });
+    this._setStatusOfRunning(false);
+
   }
 
   async update() {
@@ -82,16 +90,22 @@ class Scaffold {
     if (currentVersion === latestVersion) {
       throw new ScaffoldError('脚手架已是最新版');
     }
+    await this._checkRunning();
+    this._setStatusOfRunning(true);
     const result = await CommandUtils.execCommand(`npm install ${this.id}@latest -g`);
     if (result.code) {
       throw new NpmError('更新脚手架失败');
     }
     this.ctx.logger.debug('[Scaffold] %s --- 脚手架版本更新至 %s', this.id, latestVersion);
     this._clearCache();
+    this._setStatusOfRunning(false);
+
   }
 
   async delete() {
     await this._checkIsInstall();
+    await this._checkRunning();
+    this._setStatusOfRunning(true);
     const result = await CommandUtils.execCommand(`npm uninstall ${this.id} -g`);
     if (result.code) {
       throw new NpmError('移除脚手架失败');
@@ -191,25 +205,66 @@ class Scaffold {
     }
   }
 
+  /**
+   * 重复操作校验
+   * @returns {Promise<void>}
+   * @private
+   */
+  _checkRunning() {
+    const cache = this.ctx.app.statusMap.get(this.id);
+    if (cache && cache.running) {
+      throw new ScaffoldError('正在执行操作...');
+    }
+  }
+
+  _setStatusOfRunning(isRunning) {
+    this.ctx.app.statusMap.set(this.id, { running: isRunning });
+  }
+
+
   _getGenerateCommand(options) {
     const generatePath = path.resolve(options.tmpDir, options.name);
-    let cmd = `mkdir -p ${generatePath};`;
-    cmd += `chmod 777 ${generatePath};`;
-    cmd += `cd ${generatePath};`;
-    cmd += `yo ${this.info.scaffold} -c`;
+    fsNoPromise.mkdir(generatePath, { recursive: true }, err => {
+      if (err) this.ctx.logger.error(err);
+    });
+    this.ctx.logger.info('[Scaffold] %s --- 生成临时目录：%s', this.id, generatePath);
+    let cmd = '';
+    if (!/^win/.test(process.platform)) {
+      fsNoPromise.chmod(generatePath, 0o775, err => {
+        if (err) throw err;
+        this.ctx.logger.info('[Scaffold] %s --- 权限已更改', this.id);
+      });
+    }
+    cmd += ` yo ${this.info.scaffold} -c`;
     for (const key in options.answers) {
       const val = options.answers[key];
       cmd += ` --${key}=${val} `;
     }
-    cmd += `;tar -cvf ../${options.name}.tar ./`;
+    // cmd += `;tar -cvf ../${options.name}.tar ./`;
     this.ctx.logger.info('[Scaffold] %s --- 生成代码命令：%s', this.id, cmd);
     return cmd;
   }
 
   _getProductPath(options) {
-    const productPath = path.resolve(options.tmpDir, `${options.name}.tar`);
+    const productPath = path.resolve(options.tmpDir, `${options.name}${COMPRESS_FILE_SUFFIX}`);
     this.ctx.logger.debug('[Scaffold] %s --- 生成制品路径：%s', this.id, productPath);
     return productPath;
+  }
+
+  async _compressProduct(options) {
+    const productPath = path.resolve(options.tmpDir, options.name);
+    const stream = new compressing.zip.Stream();
+    const files = await fs.readdir(productPath);
+    for (const f of files) {
+      stream.addEntry(path.resolve(productPath, f));
+    }
+    await new Promise(resolve => {
+      stream.pipe(fsNoPromise.createWriteStream(`${productPath}${COMPRESS_FILE_SUFFIX}`))
+        .on('finish', () => {
+          resolve();
+        });
+    });
+    this.ctx.logger.info('[Scaffold] %s --- 压缩完成：%s', this.id, productPath + COMPRESS_FILE_SUFFIX);
   }
 
   async _isSupportUIFunc(func) {
@@ -228,7 +283,7 @@ class Scaffold {
   }
 
   _getCache(property) {
-    const cache = this.ctx.app.scaffoldCacheMap.get(this.id);
+    const cache = this.ctx.app.getCache(this.id);
     if (property && cache) {
       this.ctx.logger.debug('[Scaffold] %s --- %s 缓存信息：%s', this.id, property, cache[property]);
       return cache[property];
@@ -238,15 +293,16 @@ class Scaffold {
   }
 
   _updateCache(property) {
-    let cache = this.ctx.app.scaffoldCacheMap.get(this.id);
+    let cache = this.ctx.app.getCache(this.id);
     cache = _.assign(cache, property);
     this.ctx.logger.info('[Scaffold] %s --- 更新缓存：%o', this.id, property);
-    this.ctx.app.scaffoldCacheMap.set(this.id, cache);
+    this.ctx.app.setOrUpdateCache(this.id, cache);
   }
 
   _clearCache() {
     this.ctx.logger.info('[Scaffold] %s --- 清理缓存', this.id);
-    this.ctx.app.scaffoldCacheMap.set(this.id, undefined);
+    this.ctx.app.setOrUpdateCache(this.id, undefined);
+    this.ctx.app.statusMap.clear();
   }
 }
 
