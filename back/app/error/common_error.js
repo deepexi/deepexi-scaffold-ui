@@ -28,4 +28,5 @@ module.exports = {
   UserError,
   ScaffoldError,
   NpmError,
+  AuthError
 };

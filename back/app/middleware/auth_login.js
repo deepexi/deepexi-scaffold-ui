@@ -9,13 +9,19 @@ module.exports = () => {
     let method = ['POST', 'PUT', 'DELETE'];
 
     let isBlackUrl = blackUrl.some((blackUrl) => ctx.url.startsWith(blackUrl));
-    let iswhiteUrl = whiteUrls.some((whiteUrl) => ctx.url == whiteUrl);
-    let isMethod = method.some((method) => ctx.accept.negotiator.request.method == method);
+    let iswhiteUrl = whiteUrls.some((whiteUrl) => ctx.url === whiteUrl);
+    let isMethod = method.some((method) => ctx.accept.negotiator.request.method === method);
 
     if (isBlackUrl && isMethod && !iswhiteUrl) {
       ctx.logger.debug('authLogin');
-      if (ctx.session.userId != ctx.cookies.userId) {
-        ctx.redirect('/scaffolds/user/login');
+      if (ctx.session.userId !== ctx.cookies.userId) {
+        ctx.body = {
+            code: 0,
+            msg: '无操作权限',
+            extra_info: '',
+            payload: null,
+            success: false
+          };
       } else {
         ctx.logger.debug('auth ok');
         await next();
