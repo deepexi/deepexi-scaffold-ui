@@ -19,7 +19,9 @@ class User {
   async login(username, password) {
     if (username === adminName && password === adminPassWord) {
       const userId = this.ctx.session.userId = uuidv1();
-      this.ctx.cookies.set('userId', userId);
+      this.ctx.cookies.set('userId', userId, {
+        maxAge: 1000 * 60 * 60 * 24
+      });
       this.ctx.logger.debug('[User] %s --- 登录', userId);
       return username;
     }
@@ -29,7 +31,7 @@ class User {
   async logout() {
     const userId = this.ctx.session.userId;
     const userUserId = this.ctx.cookies.get('userId');
-    if (userId  === userUserId) {
+    if (userId === userUserId) {
       this.ctx.logger.debug('[User] %s --- 登出', userUserId);
       return true;
     }
