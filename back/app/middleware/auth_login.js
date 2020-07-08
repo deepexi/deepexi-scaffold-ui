@@ -4,24 +4,24 @@ module.exports = () => {
 
   return async function authLogin(ctx, next) {
 
-    let whiteUrls = ['/scaffolds/user/login', '/scaffolds/user/logout'];
-    let blackUrl = ['/scaffolds'];
+    let blackUrl = ['/scaffolds', '/scaffolds/generator-deepexi-dubbo', '/scaffolds/generator-deepexi-eggjs',
+      '/scaffolds/generator-deepexi-spring-cloud'
+    ];
     let method = ['POST', 'PUT', 'DELETE'];
 
-    let isBlackUrl = blackUrl.some((blackUrl) => ctx.url.startsWith(blackUrl));
-    let iswhiteUrl = whiteUrls.some((whiteUrl) => ctx.url === whiteUrl);
+    let isBlackUrl = blackUrl.some((blackUrl) => ctx.url === blackUrl);
     let isMethod = method.some((method) => ctx.accept.negotiator.request.method === method);
 
-    if (isBlackUrl && isMethod && !iswhiteUrl) {
+    if (isBlackUrl && isMethod) {
       ctx.logger.debug('authLogin');
-      if (!ctx.session.userId) {
+      if (!ctx.cookies.userId) {
         ctx.body = {
-            code: 0,
-            msg: '无操作权限',
-            extra_info: '',
-            payload: null,
-            success: false
-          };
+          code: 0,
+          msg: '无操作权限',
+          extra_info: '',
+          payload: null,
+          success: false
+        };
       } else {
         ctx.logger.debug('auth ok');
         await next();
