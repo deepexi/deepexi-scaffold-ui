@@ -6,7 +6,7 @@
       class="cu-button"
       type="text"
       @click="logout"
-      >欢迎，{{ loginData.username }}</el-button
+      >欢迎，{{ $store.state.loginData }}</el-button
     >
     <el-button v-else class="cu-button" type="text" @click="openDialog"
       >登录</el-button
@@ -66,9 +66,6 @@ export default {
   data() {
     return {
       loginVisible: false,
-      loginData: {
-        username: '项天成'
-      },
       loading: false,
       loginForm: {
         username: '',
@@ -117,9 +114,11 @@ export default {
         const res = await loginOut()
         this.$message({
           type: 'success',
-          message: '退出成功!'
+          message: '用户登出成功!'
         });
+        this.$store.commit('loginUpdateData', '')
         this.$store.commit('loginState', false)
+        localStorage.clear()
       } catch (error) {
         console.log(error)
       }
@@ -128,13 +127,13 @@ export default {
       const params = { ...this.loginForm }
       try {
         const res = await login(params)
-        this.loginData = res.data.payload
         this.$message({
           type: 'success',
           message: '登录成功!'
         });
         this.loading = false;
         this.close()
+        this.$store.commit('loginUpdateData', res.payload)
         this.$store.commit('loginState', true)
       } catch (error) {
         console.log(error)

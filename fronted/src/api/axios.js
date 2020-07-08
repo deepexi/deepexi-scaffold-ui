@@ -28,7 +28,8 @@ export const instance = (url, data = {}) => new Promise((resolve, reject) => {
     if (e.response && e.response.data && e.response.data.stack) {
       Notification.error(e.response.data.stack)
     } else if (e.response && e.response.data) {
-      Notification.error(e.response.data)
+      Notification.error(e.response.data.msg || e.response.data)
+      console.log(e.response.data)
     } else {
       Notification.error(e.stack)
       console.error(e.stack)
