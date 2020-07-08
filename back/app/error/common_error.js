@@ -27,6 +27,5 @@ class NpmError extends Error {
 module.exports = {
   UserError,
   ScaffoldError,
-  NpmError,
-  AuthError
+  NpmError
 };
