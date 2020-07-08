@@ -10,7 +10,8 @@ class UserController extends Controller {
 
   /**
    * @Summary 用户登录
-   * @Router POST /login
+   * @Request body login 登录信息
+   * @Router POST /user/login
    * @Response 200
    */
   async login() {
@@ -21,7 +22,7 @@ class UserController extends Controller {
 
   /**
    * @Summary 用户登出
-   * @Router Delete /logout
+   * @Router Delete /user/logout
    * @Response 200
    */
   async logout() {
