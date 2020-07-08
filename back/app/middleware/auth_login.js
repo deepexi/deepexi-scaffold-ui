@@ -2,7 +2,7 @@
 
 module.exports = () => {
 
-  return async function testMiddleware(ctx, next) {
+  return async function authLogin(ctx, next) {
 
     let whiteUrls = ['/scaffolds/user/login', '/scaffolds/user/logout'];
     let blackUrl = ['/scaffolds'];
