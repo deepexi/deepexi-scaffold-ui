@@ -12,6 +12,6 @@ module.exports = app => {
   router.put('/scaffolds/:scaffoldId', payload, controller.scaffoldUi.update);
   router.delete('/scaffolds/:scaffoldId', payload, controller.scaffoldUi.delete);
 
-  router.post('/user/login', payload, controller.user.login);
-  router.delete('/user/logout', payload, controller.user.logout);
+  router.post('/scaffolds/user/login', payload, controller.user.login);
+  router.delete('/scaffolds/user/logout', payload, controller.user.logout);
 };

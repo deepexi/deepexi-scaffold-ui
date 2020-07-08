@@ -15,7 +15,7 @@ module.exports = app => {
 
     async login(username, password) {
       const user = this.UserManager.buildUser();
-      await user.login(username, password);
+      return await user.login(username, password);
     }
 
     async logout() {

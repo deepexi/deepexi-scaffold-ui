@@ -21,7 +21,7 @@ class User {
       const token = this.ctx.session.token = uuidv1();
       this.ctx.cookies.set('token', token);
       this.ctx.logger.debug('[User] %s --- 登录', token);
-      return true;
+      return username;
     }
     throw new UserError('用户名或密码错误!');
   }

@@ -11,18 +11,17 @@ class UserController extends Controller {
   /**
    * @Summary 用户登录
    * @Request body login 登录信息
-   * @Router POST /user/login
+   * @Router POST /scaffolds/user/login
    * @Response 200
    */
   async login() {
-    const { ctx, service } = this;
-    await service.user.login(ctx.request.body.username, ctx.request.body.password);
-    ctx.body = '用户登录成功';
+    const {ctx, service} = this;
+    ctx.body = await service.user.login(ctx.request.body.username, ctx.request.body.password);
   }
 
   /**
    * @Summary 用户登出
-   * @Router Delete /user/logout
+   * @Router Delete /scaffolds/user/logout
    * @Response 200
    */
   async logout() {

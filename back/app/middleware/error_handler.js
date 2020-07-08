@@ -26,10 +26,11 @@ module.exports = () => {
       if (err.status === 430) {
         ctx.logger.debug(`业务异常：${err.stack || err.message}`);
         ctx.body = {
-          code: 1,
+          code: 0,
           msg: err.message,
           extra_info: _extra_info || '',
           payload: null,
+          success: false
         };
       } else {
         // 非业务异常，通知框架
