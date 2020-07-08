@@ -14,7 +14,8 @@ import {
   FormItem,
   Option,
   RadioGroup,
-  Tooltip
+  Tooltip,
+  Dialog
 } from 'element-ui'
 
 import 'element-ui/lib/theme-chalk/index.css'
@@ -32,6 +33,7 @@ Vue.use(FormItem)
 Vue.use(Option)
 Vue.use(RadioGroup)
 Vue.use(Tooltip)
+Vue.use(Dialog)
 
 Vue.prototype.$confirm = MessageBox.confirm
 Vue.prototype.$message = Message

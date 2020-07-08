@@ -1,38 +1,47 @@
 <template>
-    <el-row class="home" :gutter="20" type="flex" v-loading="loading">
-      <el-col v-for="scaffold in scaffolds" :span="8" :key="scaffold.id">
-        <div class="scaffold" @click="toFormPage(scaffold)">
-          <div class="title">{{scaffold.name}}</div>
-          <div class="body">
-            <p v-show="scaffold.description">description: {{scaffold.description}}</p>
-            <p>最新版本: {{scaffold.latestVersion}}</p>
-            <p>当前版本：{{scaffold.currentVersion || '-'}}</p>
-          </div>
-          <div class="footer" @click="stopPropagation($event)">
-            <el-button 
-              size="small" 
-              type="primary" 
-              :loading="scaffold.loading.update" 
-              :disabled="scaffold.isInstall===0 || scaffold.isUpdatable===0" 
-              @click="update(scaffold)"
-            >更新</el-button>
-            <el-button 
-              size="small" 
-              type="success" 
-              :loading="scaffold.loading.install" 
-              :disabled="scaffold.isInstall===1" 
-              @click="install(scaffold)"
-            >安装</el-button>
-            <el-button 
-              size="small" 
-              type="danger" 
-              :loading="scaffold.loading.delete"
-              @click="deleteScaffold(scaffold)"
-            >删除</el-button>
-          </div>
+  <el-row class="home" :gutter="20" type="flex" v-loading="loading">
+    <el-col v-for="scaffold in scaffolds" :span="8" :key="scaffold.id">
+      <div class="scaffold" @click="toFormPage(scaffold)">
+        <div class="title">{{ scaffold.name }}</div>
+        <div class="body">
+          <p v-show="scaffold.description">
+            description: {{ scaffold.description }}
+          </p>
+          <p>最新版本: {{ scaffold.latestVersion }}</p>
+          <p>当前版本：{{ scaffold.currentVersion || "-" }}</p>
         </div>
-      </el-col>
-    </el-row>
+        <div
+          class="footer"
+          v-if="$store.state.isLogin"
+          @click="stopPropagation($event)"
+        >
+          <el-button
+            size="small"
+            type="primary"
+            :loading="scaffold.loading.update"
+            :disabled="scaffold.isInstall === 0 || scaffold.isUpdatable === 0"
+            @click="update(scaffold)"
+            >更新</el-button
+          >
+          <el-button
+            size="small"
+            type="success"
+            :loading="scaffold.loading.install"
+            :disabled="scaffold.isInstall === 1"
+            @click="install(scaffold)"
+            >安装</el-button
+          >
+          <el-button
+            size="small"
+            type="danger"
+            :loading="scaffold.loading.delete"
+            @click="deleteScaffold(scaffold)"
+            >删除</el-button
+          >
+        </div>
+      </div>
+    </el-col>
+  </el-row>
 </template>
 
 <script>
@@ -46,17 +55,17 @@ import {
 
 export default {
   name: 'home',
-  data () {
+  data() {
     return {
       loading: false,
       scaffolds: []
     }
   },
-  mounted () {
+  mounted() {
     this.getScaffoldsList()
   },
   methods: {
-    getScaffoldsList () {
+    getScaffoldsList() {
       this.loading = true
       getScaffoldsList().then(res => {
         this.scaffolds = res.payload.map(scaffold => {
@@ -71,32 +80,32 @@ export default {
         this.loading = false
       })
     },
-    update (scaffold) {
+    update(scaffold) {
       scaffold.loading.update = true
       updateScaffolds(scaffold.id).then(this.getScaffoldsList)
         .finally(() => scaffold.loading.update = false)
     },
-    install (scaffold) {
+    install(scaffold) {
       scaffold.loading.install = true
       installScaffolds(scaffold.id).then(res => {
         this.$message(res.payload)
         this.getScaffoldsList()
       }).finally(() => scaffold.loading.install = false)
     },
-    deleteScaffold (scaffold) {
+    deleteScaffold(scaffold) {
       this.$confirm('删除' + scaffold.name + '?').then(res => {
         scaffold.loading.delete = true
         deleteScaffolds(scaffold.id).then(this.getScaffoldsList)
           .finally(() => scaffold.loading.delete = false)
       })
     },
-    stopPropagation (e) {
+    stopPropagation(e) {
       e.stopPropagation()
     },
-    toFormPage (scaffold) {
-      if(scaffold.isInstall===1){
+    toFormPage(scaffold) {
+      if (scaffold.isInstall === 1) {
         this.$router.push(`/${scaffold.id}`)
-      }else{
+      } else {
         this.$message('还没安装，请先安装')
       }
     }
@@ -104,32 +113,32 @@ export default {
 }
 </script>
 <style lang="less">
-.home{
+.home {
   min-height: 201px;
 }
-.scaffold{
+.scaffold {
   border: 1px solid #ccc;
   background: #fff;
   margin-bottom: 16px;
   height: 100%;
   position: relative;
   cursor: pointer;
-  .title{
+  .title {
     text-align: center;
     border-bottom: 1px solid #ccc;
   }
-  .body{
-    padding-bottom:49px;
+  .body {
+    padding-bottom: 49px;
   }
-  .footer{
+  .footer {
     text-align: center;
     border-top: 1px solid #ccc;
     position: absolute;
-    bottom:0;
-    left:0;
-    right:0;
+    bottom: 0;
+    left: 0;
+    right: 0;
   }
-  div{
+  div {
     padding: 8px;
   }
 }

@@ -6,7 +6,7 @@ module.exports = {
     proxy: {
       '/scaffolds': {
         target: 'http://127.0.0.1:7001'
-      }
+      },
     }
   },
   lintOnSave: true
