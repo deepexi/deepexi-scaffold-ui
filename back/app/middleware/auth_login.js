@@ -14,7 +14,8 @@ module.exports = () => {
 
     if (isBlackUrl && isMethod) {
       ctx.logger.debug('authLogin');
-      if (!ctx.cookies.userId) {
+      ctx.logger.debug('userId:',ctx.cookies.get('userId'));
+      if (!ctx.cookies.get('userId')) {
         ctx.body = {
           code: 0,
           msg: '无操作权限',
