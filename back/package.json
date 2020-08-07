@@ -1,6 +1,6 @@
 {
   "name": "deepexi-scaffold-ui",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "egg": {
     "declarations": true
   },
