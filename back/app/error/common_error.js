@@ -1,5 +1,13 @@
 'use strict';
 
+class UserError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'UserError';
+    this.status = 430;
+  }
+}
+
 class ScaffoldError extends Error {
   constructor(message) {
     super(message);
@@ -16,4 +24,8 @@ class NpmError extends Error {
   }
 }
 
-module.exports = { ScaffoldError, NpmError };
+module.exports = {
+  UserError,
+  ScaffoldError,
+  NpmError
+};
